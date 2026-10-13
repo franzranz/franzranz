@@ -39,11 +39,12 @@ class Rad:
     crr: float = 0.006                 # Rollwiderstand Stadtreifen
     cda: float = 0.55                  # m², aufrecht
     r: float = 0.34                    # m, 700c
-    # Optional: Zweigang-Nabe statt Singlespeed (Alternative ohne Motor)
-    gang_klein: float | None = None    # Übersetzungsfaktor des Anfahrgangs, z. B. 0,73 = 27 % leichter
-    v_schalt: float = 15 / 3.6         # m/s, darüber direkter Gang
-    eta_klein: float = 0.94            # Wirkungsgrad im Anfahrgang (Planetengetriebe)
-    eta_direkt: float = 0.98           # Wirkungsgrad im direkten Gang
+    # Optional: Mehrgang-Nabe statt Singlespeed (Alternative ohne Motor). Der große Gang entspricht
+    # der Singlespeed-Übersetzung, der Anfahrgang ist um 'gang_klein' kürzer.
+    gang_klein: float | None = None    # Übersetzungsfaktor des Anfahrgangs, z. B. 0,725 = 27,5 % kürzer
+    v_schalt: float = 15 / 3.6         # m/s, darüber großer Gang
+    eta_klein: float = 1.0             # Wirkungsgrad im Anfahrgang relativ zum Singlespeed
+    eta_gross: float = 1.0             # Wirkungsgrad im großen Gang relativ zum Singlespeed
 
     def gang(self, v: float) -> tuple[float, float]:
         """(Kraftfaktor am Rad, Wirkungsgrad) für die aktuelle Geschwindigkeit."""
@@ -51,7 +52,7 @@ class Rad:
             return 1.0, 1.0
         if v < self.v_schalt:
             return 1.0 / self.gang_klein, self.eta_klein
-        return 1.0, self.eta_direkt
+        return 1.0, self.eta_gross
 
 
 @dataclass
@@ -155,6 +156,7 @@ class Boost:
     p_max: float | None = None   # W mechanisch, None = Motorgrenze
     v_ab: float = 0.0            # m/s, Boost erst ab dieser Geschwindigkeit
     gleichmaessig: bool = False  # Energie im Speicher gleichmäßig auf 'dauer' verteilen
+    v_bis: float | None = None   # m/s, Boost endet bei diesem Tempo (None = Reisetempo)
 
 
 # --------------------------------------------------------------------------- Strecke
@@ -281,7 +283,8 @@ def simuliere(strecke: Strecke, fahrer: Fahrer, rad: Rad, motor: Motor | None,
             else:
                 antrieb = True
                 if strategie.nur_anfahren:
-                    knopf = t_start <= strategie.dauer and strategie.v_ab <= v < fahrer.v_reise - 0.3
+                    v_ende = strategie.v_bis if strategie.v_bis is not None else fahrer.v_reise - 0.3
+                    knopf = t_start <= strategie.dauer and strategie.v_ab <= v < v_ende
                 else:
                     knopf = v < fahrer.v_reise - 0.3 or st >= 0.02
                 knopf = knopf and boost and motor is not None and st >= 0  # bergab nie boosten

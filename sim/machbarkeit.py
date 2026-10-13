@@ -77,8 +77,13 @@ def ausrollen(strecke: Strecke, motoren, strategie: Boost) -> None:
 
 def alternativen(strecke: Strecke) -> None:
     """Gleiches Ziel (leichter anfahren), anderer Weg: Zweigang-Nabe statt Motor."""
-    zweigang = Rad(masse_ohne_speicher=BASIS_RAD + 0.7, gang_klein=0.73)
+    # Sturmey-Archer S2 Kickshift (120 mm, ~0,5 kg netto): kleiner Gang direkt, großer Gang 138 % über Planeten.
+    # Shimano Nexus 3 (120 mm, ~0,9 kg netto): 1. Gang 0,733 über Planeten, 2. Gang direkt (= Singlespeed).
+    # Wirkungsgrade der Planetenstufe: Annahme 0,94 (Kyle/Berto: Nabenschaltungen 86-95 %).
+    s2 = Rad(masse_ohne_speicher=BASIS_RAD + 0.5, gang_klein=1 / 1.38, eta_klein=0.99, eta_gross=0.94)
+    nexus3 = Rad(masse_ohne_speicher=BASIS_RAD + 0.9, gang_klein=0.733, eta_klein=0.94, eta_gross=0.99)
     g = STRATEGIEN[1]
+    anfahrhilfe = Boost("Anfahrhilfe nur bis 12 km/h", True, 10, 35, 1000, v_bis=12 / 3.6)
     for p_anfahr in (300, 150):
         fahrer = Fahrer(masse=100, p_anfahr=p_anfahr)
         ref = simuliere(strecke, fahrer, Rad(masse_ohne_speicher=BASIS_RAD), None, None, runden=1)
@@ -86,13 +91,17 @@ def alternativen(strecke: Strecke) -> None:
         print("| Variante | Rad kg | Fahrer gesamt vs. SS | 0→20 km/h s | Fahrer-J pro Start | s am Übersetzungslimit |")
         print("|---|---|---|---|---|---|")
         zeilen = [("Singlespeed", BASIS_RAD, ref)]
-        zeilen.append(("Zweigang-Nabe (Anfahrgang -27 %, +0,7 kg, η 0,94/0,98)", zweigang.masse_ohne_speicher,
-                       simuliere(strecke, fahrer, zweigang, None, None, runden=1)))
+        zeilen.append(("Zweigang-Nabe Sturmey-Archer S2 (Anfahrgang direkt, großer Gang 138 %)", s2.masse_ohne_speicher,
+                       simuliere(strecke, fahrer, s2, None, None, runden=1)))
+        zeilen.append(("Dreigang-Nabe Shimano Nexus 3 (1. Gang 0,733, 2. Gang direkt)", nexus3.masse_ohne_speicher,
+                       simuliere(strecke, fahrer, nexus3, None, None, runden=1)))
         for key in ("sx1", "all_axle"):
             motor = MOTOREN[key]
-            rad, sp = rad_fuer(motor), SPEICHER()
-            zeilen.append((f"{motor.name}, {g.name}", rad.masse_ohne_speicher + sp.masse,
-                           simuliere_stationaer(strecke, fahrer, rad, motor, sp, strategie=g)))
+            rad = rad_fuer(motor)
+            for b in (g, anfahrhilfe):
+                sp = SPEICHER()
+                zeilen.append((f"{motor.name}, {b.name}", rad.masse_ohne_speicher + sp.masse,
+                               simuliere_stationaer(strecke, fahrer, rad, motor, sp, strategie=b)))
         for name, kg, e in zeilen:
             print(f"| {name} | {kg:.1f} | {100 * (e.fahrerarbeit_kj / ref.fahrerarbeit_kj - 1):+.1f} % | "
                   f"{e.anfahrzeit_s:.1f} | {e.anfahr_fahrer_j_pro_start:.0f} | {e.zeit_kraftlimit_s:.0f} |")

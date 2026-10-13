@@ -102,15 +102,21 @@ Zelle: Fahrerarbeit gesamt vs. Singlespeed / Rekuperation pro Ampelstopp (Wh, im
 | Variante | Rad kg | Fahrer gesamt vs. SS | 0→20 km/h s | Fahrer-J pro Start | s am Übersetzungslimit |
 |---|---|---|---|---|---|
 | Singlespeed | 10.0 | +0.0 % | 8.6 | 2033 | 74 |
-| Zweigang-Nabe (Anfahrgang -27 %, +0,7 kg, η 0,94/0,98) | 10.7 | +4.1 % | 8.0 | 2122 | 35 |
+| Zweigang-Nabe Sturmey-Archer S2 (Anfahrgang direkt, großer Gang 138 %) | 10.5 | +4.8 % | 8.0 | 2113 | 37 |
+| Dreigang-Nabe Shimano Nexus 3 (1. Gang 0,733, 2. Gang direkt) | 10.9 | +3.8 % | 8.0 | 2120 | 35 |
 | Shengyi SX1 Front Regen-Mod (Getriebe, Fast), gleichmäßig über 10 s | 14.3 | +0.0 % | 4.5 | 1055 | 0 |
+| Shengyi SX1 Front Regen-Mod (Getriebe, Fast), Anfahrhilfe nur bis 12 km/h | 14.3 | +5.4 % | 6.9 | 1790 | 0 |
 | Grin All-Axle V3 Front (DD, Std), gleichmäßig über 10 s | 15.4 | +2.6 % | 5.1 | 1193 | 0 |
+| Grin All-Axle V3 Front (DD, Std), Anfahrhilfe nur bis 12 km/h | 15.4 | +7.1 % | 7.0 | 1817 | 0 |
 
 ### Alternativen zum selben Ziel: Stadtstrecke, Fahrer 100 kg, Antritt 150 W
 
 | Variante | Rad kg | Fahrer gesamt vs. SS | 0→20 km/h s | Fahrer-J pro Start | s am Übersetzungslimit |
 |---|---|---|---|---|---|
 | Singlespeed | 10.0 | +0.0 % | 18.4 | 2620 | 38 |
-| Zweigang-Nabe (Anfahrgang -27 %, +0,7 kg, η 0,94/0,98) | 10.7 | +3.7 % | 19.1 | 2792 | 18 |
+| Zweigang-Nabe Sturmey-Archer S2 (Anfahrgang direkt, großer Gang 138 %) | 10.5 | +4.2 % | 19.4 | 2835 | 19 |
+| Dreigang-Nabe Shimano Nexus 3 (1. Gang 0,733, 2. Gang direkt) | 10.9 | +3.3 % | 18.9 | 2761 | 18 |
 | Shengyi SX1 Front Regen-Mod (Getriebe, Fast), gleichmäßig über 10 s | 14.3 | -0.0 % | 8.1 | 1132 | 0 |
+| Shengyi SX1 Front Regen-Mod (Getriebe, Fast), Anfahrhilfe nur bis 12 km/h | 14.3 | +3.8 % | 16.9 | 2461 | 0 |
 | Grin All-Axle V3 Front (DD, Std), gleichmäßig über 10 s | 15.4 | +2.5 % | 9.8 | 1383 | 0 |
+| Grin All-Axle V3 Front (DD, Std), Anfahrhilfe nur bis 12 km/h | 15.4 | +5.3 % | 17.6 | 2566 | 0 |
