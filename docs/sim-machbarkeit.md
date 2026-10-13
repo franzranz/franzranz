@@ -96,3 +96,21 @@ Zelle: Fahrerarbeit gesamt vs. Singlespeed / Rekuperation pro Ampelstopp (Wh, im
 | Shengyi SX1 Front Regen-Mod (Getriebe, Fast) | 30 m | +0.3 % | 1125 (2033) | 42 % | 0.35 |
 | Shengyi SX1 Front Regen-Mod (Getriebe, Fast) | 60 m | +0.7 % | 1209 (2033) | 39 % | 0.31 |
 | Shengyi SX1 Front Regen-Mod (Getriebe, Fast) | 100 m | +1.0 % | 1296 (2033) | 35 % | 0.27 |
+
+### Alternativen zum selben Ziel: Stadtstrecke, Fahrer 100 kg, Antritt 300 W
+
+| Variante | Rad kg | Fahrer gesamt vs. SS | 0→20 km/h s | Fahrer-J pro Start | s am Übersetzungslimit |
+|---|---|---|---|---|---|
+| Singlespeed | 10.0 | +0.0 % | 8.6 | 2033 | 74 |
+| Zweigang-Nabe (Anfahrgang -27 %, +0,7 kg, η 0,94/0,98) | 10.7 | +4.1 % | 8.0 | 2122 | 35 |
+| Shengyi SX1 Front Regen-Mod (Getriebe, Fast), gleichmäßig über 10 s | 14.3 | +0.0 % | 4.5 | 1055 | 0 |
+| Grin All-Axle V3 Front (DD, Std), gleichmäßig über 10 s | 15.4 | +2.6 % | 5.1 | 1193 | 0 |
+
+### Alternativen zum selben Ziel: Stadtstrecke, Fahrer 100 kg, Antritt 150 W
+
+| Variante | Rad kg | Fahrer gesamt vs. SS | 0→20 km/h s | Fahrer-J pro Start | s am Übersetzungslimit |
+|---|---|---|---|---|---|
+| Singlespeed | 10.0 | +0.0 % | 18.4 | 2620 | 38 |
+| Zweigang-Nabe (Anfahrgang -27 %, +0,7 kg, η 0,94/0,98) | 10.7 | +3.7 % | 19.1 | 2792 | 18 |
+| Shengyi SX1 Front Regen-Mod (Getriebe, Fast), gleichmäßig über 10 s | 14.3 | -0.0 % | 8.1 | 1132 | 0 |
+| Grin All-Axle V3 Front (DD, Std), gleichmäßig über 10 s | 15.4 | +2.5 % | 9.8 | 1383 | 0 |

@@ -39,6 +39,19 @@ class Rad:
     crr: float = 0.006                 # Rollwiderstand Stadtreifen
     cda: float = 0.55                  # m², aufrecht
     r: float = 0.34                    # m, 700c
+    # Optional: Zweigang-Nabe statt Singlespeed (Alternative ohne Motor)
+    gang_klein: float | None = None    # Übersetzungsfaktor des Anfahrgangs, z. B. 0,73 = 27 % leichter
+    v_schalt: float = 15 / 3.6         # m/s, darüber direkter Gang
+    eta_klein: float = 0.94            # Wirkungsgrad im Anfahrgang (Planetengetriebe)
+    eta_direkt: float = 0.98           # Wirkungsgrad im direkten Gang
+
+    def gang(self, v: float) -> tuple[float, float]:
+        """(Kraftfaktor am Rad, Wirkungsgrad) für die aktuelle Geschwindigkeit."""
+        if self.gang_klein is None:
+            return 1.0, 1.0
+        if v < self.v_schalt:
+            return 1.0 / self.gang_klein, self.eta_klein
+        return 1.0, self.eta_direkt
 
 
 @dataclass
@@ -273,7 +286,8 @@ def simuliere(strecke: Strecke, fahrer: Fahrer, rad: Rad, motor: Motor | None,
                     knopf = v < fahrer.v_reise - 0.3 or st >= 0.02
                 knopf = knopf and boost and motor is not None and st >= 0  # bergab nie boosten
                 p_fahrer = fahrer.p_anfahr if t_start <= 10.0 else fahrer.p_max
-                f_fahrer_max = min(fahrer.f_max, p_fahrer / max(v, 1.0))
+                kraft_faktor, eta_gang = rad.gang(v)
+                f_fahrer_max = min(fahrer.f_max * kraft_faktor, p_fahrer * eta_gang / max(v, 1.0))
                 f_motor_max = 0.0
                 if knopf:
                     t_cap = strategie.t_max if strategie.t_max is not None else motor.t_max
@@ -318,7 +332,7 @@ def simuliere(strecke: Strecke, fahrer: Fahrer, rad: Rad, motor: Motor | None,
                 e.p_boost_peak = max(e.p_boost_peak, p_el)
             else:
                 f_motor = 0.0
-            if antrieb and f_fahrer >= fahrer.f_max - 1e-9 and f_motor == 0.0 and f_wid > 0:
+            if antrieb and f_fahrer >= fahrer.f_max * rad.gang(v)[0] - 1e-9 and f_motor == 0.0 and f_wid > 0:
                 e.zeit_kraftlimit_s += DT  # Fahrer am Übersetzungslimit, Motor hilft nicht
 
             # ---- Rekuperation: Bremshebel -> erst Motor, Rest Reibbremse
@@ -347,9 +361,10 @@ def simuliere(strecke: Strecke, fahrer: Fahrer, rad: Rad, motor: Motor | None,
             e.reibbremse_wh += (f_bremse - f_rekup) * v * DT / 3600
 
             # ---- Bewegung
-            e.fahrerarbeit_kj += f_fahrer * v * DT / 1000
+            p_tritt = f_fahrer * v / rad.gang(v)[1]  # Fahrerleistung an der Kurbel
+            e.fahrerarbeit_kj += p_tritt * DT / 1000
             if not gemessen:  # läuft gerade ein gemessener Start auf der Ebene?
-                e.anfahr_fahrer_j += f_fahrer * v * DT
+                e.anfahr_fahrer_j += p_tritt * DT
                 e.anfahr_motor_j += f_motor * v * DT
             a = (f_fahrer + f_motor - f_wid - f_bremse) / m
             v_neu = v + a * DT

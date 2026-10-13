@@ -75,6 +75,29 @@ def ausrollen(strecke: Strecke, motoren, strategie: Boost) -> None:
                   f"{100 * e.motoranteil_anfahren:.0f} % | {e.rekup_wh / e.starts:.2f} |")
 
 
+def alternativen(strecke: Strecke) -> None:
+    """Gleiches Ziel (leichter anfahren), anderer Weg: Zweigang-Nabe statt Motor."""
+    zweigang = Rad(masse_ohne_speicher=BASIS_RAD + 0.7, gang_klein=0.73)
+    g = STRATEGIEN[1]
+    for p_anfahr in (300, 150):
+        fahrer = Fahrer(masse=100, p_anfahr=p_anfahr)
+        ref = simuliere(strecke, fahrer, Rad(masse_ohne_speicher=BASIS_RAD), None, None, runden=1)
+        print(f"\n### Alternativen zum selben Ziel: Stadtstrecke, Fahrer 100 kg, Antritt {p_anfahr} W\n")
+        print("| Variante | Rad kg | Fahrer gesamt vs. SS | 0→20 km/h s | Fahrer-J pro Start | s am Übersetzungslimit |")
+        print("|---|---|---|---|---|---|")
+        zeilen = [("Singlespeed", BASIS_RAD, ref)]
+        zeilen.append(("Zweigang-Nabe (Anfahrgang -27 %, +0,7 kg, η 0,94/0,98)", zweigang.masse_ohne_speicher,
+                       simuliere(strecke, fahrer, zweigang, None, None, runden=1)))
+        for key in ("sx1", "all_axle"):
+            motor = MOTOREN[key]
+            rad, sp = rad_fuer(motor), SPEICHER()
+            zeilen.append((f"{motor.name}, {g.name}", rad.masse_ohne_speicher + sp.masse,
+                           simuliere_stationaer(strecke, fahrer, rad, motor, sp, strategie=g)))
+        for name, kg, e in zeilen:
+            print(f"| {name} | {kg:.1f} | {100 * (e.fahrerarbeit_kj / ref.fahrerarbeit_kj - 1):+.1f} % | "
+                  f"{e.anfahrzeit_s:.1f} | {e.anfahr_fahrer_j_pro_start:.0f} | {e.zeit_kraftlimit_s:.0f} |")
+
+
 def main() -> None:
     stadt = Strecke(STADT)
     motoren = list(MOTOREN.values())
@@ -88,6 +111,7 @@ def main() -> None:
     tabelle(stadt, Fahrer(masse=100, p_anfahr=150), motoren, "Stadtstrecke, schwacher Antritt")
     ampelabstand(Fahrer(masse=100, p_anfahr=300), motoren + [sx1_pess], STRATEGIEN[1])
     ausrollen(stadt, [MOTOREN["all_axle"], sx1], STRATEGIEN[1])
+    alternativen(stadt)
 
 
 if __name__ == "__main__":
