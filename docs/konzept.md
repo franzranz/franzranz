@@ -27,10 +27,10 @@ Synthetische Stadtstrecke: 8 km, 20 Ampeln, 42 Hm hoch und wieder runter. Einges
 (nie eingesteckt → Boost kann nur verbrauchen, was die Bremse vorher geladen hat).
 
 - **Ertrag:** 6–9 Wh pro 8 km, also ~1 Wh/km. Ein freier Boost würde 22–36 Wh wollen → Rekuperation deckt ~25 %.
-- **Netto für den Fahrer:** Arbeit −6 % bis +5 % gegenüber einem 10-kg-Singlespeed ohne Motor, je nach Motorgüte.
-  Im Basisfall ±0. Das System bezahlt im Wesentlichen sein eigenes Gewicht und Schleppmoment.
-- **Was es wirklich bringt:** Anfahren. Die Zeit, in der der Fahrer am Übersetzungslimit hängt, geht von 30–56 s auf 0.
-  Fahrzeit 0,5–5 % kürzer. Für längere Steigungen reicht die Energie nicht: der Speicher pendelt nahe leer.
+- **Netto für den Fahrer:** Arbeit −7 % bis +5 % gegenüber einem 10-kg-Singlespeed ohne Motor, je nach Motorgüte.
+  Im Basisfall ±1 %. Das System bezahlt im Wesentlichen sein eigenes Gewicht und Schleppmoment.
+- **Was es wirklich bringt:** Anfahren. Die Zeit, in der der Fahrer am Übersetzungslimit hängt, geht von 27–53 s auf 0.
+  Fahrzeit 1–5 % kürzer. Für längere Steigungen reicht die Energie nicht: der Speicher pendelt nahe leer.
 - **Speicher:** LTO 30–60 Wh reicht. Superkondensatoren sind in jeder Zeile schlechter (+2,3 kg für 15 Wh).
 - **Größte Hebel:** (1) Kupferverluste des Motors bei hohem Drehmoment, (2) Schleppmoment ohne Strom, (3) Gewicht.
   Der Wirkungsgrad des Motortreibers (97–98 %) ist kein Hebel.
@@ -38,6 +38,29 @@ Synthetische Stadtstrecke: 8 km, 20 Ampeln, 42 Hm hoch und wieder runter. Einges
 
 Alle Motorparameter sind geschätzt. Nächster Schritt: echte Kennwerte (Kt, Wicklungswiderstand, Schleppmoment)
 der Kandidaten einsetzen, z. B. aus dem Motorsimulator von ebikes.ca.
+
+## Boost nur zum Anfahren (`sim/anfahren.py`, Rohdaten in `sim-anfahren.md`)
+
+Entscheidung: Boost nur nach Stillstand, nie am Berg. Kostet praktisch nichts, weil der Berg-Boost im Dauerbetrieb
+ohnehin leer lief. Pro Ampelstopp kommen 0,28–0,43 Wh in den Speicher (75–120 kg), das ist das Budget pro Start.
+
+Vergleich (100 kg, 300 W Antritt, getriebelose Nabe):
+
+| Strategie | Boost-Dauer | am Rad ankommend | 0→20 km/h (ohne Motor 8,6 s) | Fahrerarbeit gesamt |
+|---|---|---|---|---|
+| Alles sofort, volles Moment 35 Nm | 2,8 s | 53 % | 5,0 s | ±0 % |
+| Speicherinhalt gleichmäßig über 10 s | 5,5 s | 61 % | 5,0 s | −0,7 % |
+| Erst ab 8 km/h, 35 Nm | 2,3 s | 64 % | 5,5 s | −1,1 % |
+| Sanft 15 Nm bis Reisetempo | 6,3 s | 75 % | 6,1 s | −2,0 % |
+
+- „Volle Power 10 s“ gibt es nicht: Die Energie einer Bremsung ist bei vollem Moment nach ~3 s verbraucht.
+- „Alles sofort“ fühlt sich am stärksten an, verheizt aber die Hälfte im Motor (Kupferverluste ∝ Moment²,
+  bei niedriger Drehzahl kommt kaum mechanische Leistung heraus).
+- Leistungsgrenze (500 vs. 1000 W) ist beim Anfahren egal; was zählt, ist das Moment (Phasenstrom).
+- Sanft dosiert spart gegenüber „alles sofort“ 1,4–2,4 Prozentpunkte Fahrerarbeit und ist 0,6–1,3 s langsamer
+  auf 20 km/h. Alle Unterschiede sind klein,
+  weil pro Start nur ~0,4 Wh im Spiel sind.
+- Gilt für die getriebelose Nabe. Bei einer Getriebenabe ist der Nachteil von „alles sofort“ kleiner (zu prüfen).
 
 ## Komponenten-Shortlist
 

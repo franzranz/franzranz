@@ -24,6 +24,7 @@ DT = 0.1   # Zeitschritt s
 class Fahrer:
     masse: float = 100.0            # kg
     p_max: float = 150.0            # W, was der Fahrer dauerhaft tritt
+    p_anfahr: float = 150.0         # W in den ersten 10 s nach dem Losfahren (Antritt)
     f_max: float = 100.0            # N am Rad, Grenze durch Singlespeed-Übersetzung (Wiegetritt)
     v_reise: float = 22 / 3.6       # m/s
     v_bergab_max: float = 28 / 3.6  # m/s, darüber wird bergab gebremst
@@ -81,11 +82,23 @@ def lto(e_gesamt: float) -> Speicher:
 
 def superkondensator(e_gesamt: float) -> Speicher:
     # Zellen ~6 Wh/kg, Modul-Faktor ~0,8; braucht DC/DC wegen Spannungshub -> eta 0,98*0,96
-    return Speicher(f"Superkond. {e_gesamt:.0f} Wh", e_gesamt, 0.75, 0.94, 100.0, 4.8)
+    return Speicher(f"Superkond. {e_gesamt:.0f} Wh", e_gesamt, 0.75, 0.94, 1000.0, 4.8)
 
 
 def unbegrenzt() -> Speicher:
     return Speicher("unbegrenzt (Bedarfsanalyse)", 1e6, 1.0, 0.97, 1e6, 1e12)
+
+
+@dataclass
+class Boost:
+    """Wann und wie stark der Boost-Knopf zieht."""
+    name: str = "Ampel + Berg"
+    nur_anfahren: bool = False   # nur nach Stillstand, nie am Berg
+    dauer: float = math.inf      # s nach dem Losfahren
+    t_max: float | None = None   # Nm, None = Motorgrenze
+    p_max: float | None = None   # W mechanisch, None = Motorgrenze
+    v_ab: float = 0.0            # m/s, Boost erst ab dieser Geschwindigkeit
+    gleichmaessig: bool = False  # Energie im Speicher gleichmäßig auf 'dauer' verteilen
 
 
 # --------------------------------------------------------------------------- Strecke
@@ -139,11 +152,26 @@ class Ergebnis:
     schiebe_m: float = 0.0       # Meter, die geschoben werden müssen
     soc_min: float = math.inf
     soc_max: float = -math.inf
+    starts: int = 0                   # alle Starts aus dem Stand
+    starts_flach: int = 0             # davon auf der Ebene und bis 20 km/h gekommen
+    anfahrzeit_summe_s: float = 0.0   # 0 -> 20 km/h, nur Starts auf der Ebene
+    boost_zeit_s: float = 0.0         # Sekunden mit Motorkraft > 0
+    kupfer_boost_wh: float = 0.0      # im Motor verheizt beim Boost
+    soc_anfang: float = 0.0
+    soc_ende: float = 0.0
+
+    @property
+    def anfahrzeit_s(self) -> float:
+        return self.anfahrzeit_summe_s / self.starts_flach if self.starts_flach else 0.0
+
+    @property
+    def eta_boost(self) -> float:
+        return self.boost_mech_wh / self.boost_wh if self.boost_wh else 0.0
 
 
 def simuliere(strecke: Strecke, fahrer: Fahrer, rad: Rad, motor: Motor | None,
               speicher: Speicher | None, runden: int = 8, soc_start: float = 0.5,
-              boost: bool = True) -> Ergebnis:
+              boost: bool = True, strategie: Boost = Boost()) -> Ergebnis:
     """Gibt das Ergebnis der LETZTEN Runde zurück (eingeschwungen)."""
     m = fahrer.masse + rad.masse_ohne_speicher + (speicher.masse if speicher else 0.0)
     soc = speicher.e_nutz * soc_start if speicher else 0.0  # Wh im nutzbaren Fenster
@@ -151,16 +179,21 @@ def simuliere(strecke: Strecke, fahrer: Fahrer, rad: Rad, motor: Motor | None,
     f_schlepp = motor.t_schlepp / rad.r if motor else 0.0
 
     for runde in range(runden):
-        e = Ergebnis()
+        e = Ergebnis(soc_anfang=soc)
         s, v, ampel_idx = 0.0, 0.0, 0
+        t_start, soc_beim_start, gemessen = 0.0, soc, strecke.steigung(0.0) != 0
+        e.starts = 1
+        bremst = False  # Hysterese: einmal für die Ampel gebremst, bis zum Stillstand
         while s < strecke.laenge:
             st = strecke.steigung(s)
             f_wid = m * G * rad.crr + 0.5 * RHO * rad.cda * v * v + m * G * st + f_schlepp
             ziel = strecke.ampeln[ampel_idx] if ampel_idx < len(strecke.ampeln) else None
             f_fahrer = f_motor = f_bremse = 0.0
 
-            a_noetig = v * v / (2 * (ziel - s)) if ziel is not None and ziel > s else 0.0
-            if ziel is not None and a_noetig >= fahrer.a_brems:
+            rest = ziel - s if ziel is not None else math.inf
+            a_noetig = v * v / (2 * rest) if rest > 0.01 else 0.0
+            bremst = bremst or (ziel is not None and a_noetig >= fahrer.a_brems)
+            if bremst:
                 # Anhalten: genau so verzögern, dass man an der Ampel steht
                 f_bremse = m * a_noetig - f_wid
                 if f_bremse < 0:
@@ -168,9 +201,23 @@ def simuliere(strecke: Strecke, fahrer: Fahrer, rad: Rad, motor: Motor | None,
             elif v > fahrer.v_bergab_max and f_wid < 0:
                 f_bremse = -f_wid  # bergab Geschwindigkeit halten
             else:
-                knopf = boost and motor is not None and (v < fahrer.v_reise - 0.3 or st >= 0.02)
-                f_fahrer_max = min(fahrer.f_max, fahrer.p_max / max(v, 1.0))
-                f_motor_max = min(motor.t_max / rad.r, motor.p_boost_max / max(v, 1.0)) if knopf else 0.0
+                if strategie.nur_anfahren:
+                    knopf = t_start <= strategie.dauer and strategie.v_ab <= v < fahrer.v_reise - 0.3
+                else:
+                    knopf = v < fahrer.v_reise - 0.3 or st >= 0.02
+                knopf = knopf and boost and motor is not None
+                p_fahrer = fahrer.p_anfahr if t_start <= 10.0 else fahrer.p_max
+                f_fahrer_max = min(fahrer.f_max, p_fahrer / max(v, 1.0))
+                f_motor_max = 0.0
+                if knopf:
+                    t_cap = strategie.t_max if strategie.t_max is not None else motor.t_max
+                    p_cap = strategie.p_max if strategie.p_max is not None else motor.p_boost_max
+                    f_motor_max = min(t_cap / rad.r, p_cap / max(v, 1.0))
+                    if strategie.gleichmaessig and speicher is not None:
+                        # Kraft, bei der der Speicher genau soc_beim_start / dauer liefert
+                        p_ziel = soc_beim_start * 3600 / strategie.dauer * motor.eta_regler * speicher.eta
+                        a_q = (rad.r / motor.kt) ** 2 * motor.r_wicklung
+                        f_motor_max = min(f_motor_max, (-v + math.sqrt(v * v + 4 * a_q * p_ziel)) / (2 * a_q))
                 if v < fahrer.v_reise:
                     f_fahrer, f_motor = f_fahrer_max, f_motor_max
                 else:  # Reisetempo halten, Motor nur am Berg
@@ -191,6 +238,10 @@ def simuliere(strecke: Strecke, fahrer: Fahrer, rad: Rad, motor: Motor | None,
                     f_motor, p_el = 0.0, 0.0
                 soc -= p_el * DT / 3600
                 e.boost_wh += p_el * DT / 3600
+                if f_motor > 0:
+                    e.boost_zeit_s += DT
+                    i = f_motor * rad.r / motor.kt
+                    e.kupfer_boost_wh += i * i * motor.r_wicklung * DT / 3600
                 e.boost_mech_wh += f_motor * v * DT / 3600
                 e.p_boost_peak = max(e.p_boost_peak, p_el)
             else:
@@ -227,15 +278,38 @@ def simuliere(strecke: Strecke, fahrer: Fahrer, rad: Rad, motor: Motor | None,
                 e.schiebe_m += 1.1 * DT
                 e.fahrzeit_s += DT
                 continue
-            if ziel is not None and (v_neu <= 0.05 and ziel - s < 20 or s + v * DT >= ziel):
-                s, v = ziel, 0.0  # an der Ampel
+            if ziel is not None and (rest <= 0.01 or v_neu <= 0.05 and rest < 2 or s + max(v_neu, 0.0) * DT >= ziel):
+                e.reibbremse_wh += 0.5 * m * max(v_neu, 0.0) ** 2 / 3600  # Rest-Bewegungsenergie
+                s, v, bremst = ziel, 0.0, False  # an der Ampel
                 ampel_idx += 1
                 e.fahrzeit_s += DT  # Standzeit zählt nicht zur Fahrzeit
+                t_start, soc_beim_start = 0.0, soc
+                gemessen = strecke.steigung(s + 1.0) != 0  # nur Starts auf der Ebene messen
+                e.starts += 1
                 continue
             v = max(v_neu, 0.0)
             s += v * DT
             e.fahrzeit_s += DT
+            t_start += DT
+            if not gemessen and v >= 20 / 3.6:
+                e.starts_flach += 1
+                e.anfahrzeit_summe_s += t_start
+                gemessen = True
             e.soc_min, e.soc_max = min(e.soc_min, soc), max(e.soc_max, soc)
+        e.soc_ende = soc
+    return e
+
+
+def simuliere_stationaer(strecke: Strecke, fahrer: Fahrer, rad: Rad, motor: Motor, speicher: Speicher,
+                         **kw) -> Ergebnis:
+    """Eingeschwungener Zustand ohne Ladestecker: über eine Runde gilt Boost-Entnahme <= Rekuperation.
+
+    Start mit leerem Speicher. Verbraucht die Strategie weniger als sie lädt (Speicher steigt),
+    wird mit vollem Speicher neu gerechnet – dann ist der volle Speicher der stationäre Zustand.
+    """
+    e = simuliere(strecke, fahrer, rad, motor, speicher, runden=3, soc_start=0.0, **kw)
+    if e.soc_ende - e.soc_anfang > 0.05:
+        e = simuliere(strecke, fahrer, rad, motor, speicher, runden=3, soc_start=1.0, **kw)
     return e
 
 
@@ -267,7 +341,7 @@ def main() -> None:
 
         for sp in (lto(30), lto(60), lto(100), superkondensator(15), superkondensator(40)):
             r = Rad()
-            e = simuliere(strecke, fahrer, r, Motor(), sp)
+            e = simuliere_stationaer(strecke, fahrer, r, Motor(), sp)
             print(zeile(sp.name, r.masse_ohne_speicher + sp.masse, e, ref))
 
         leer = simuliere(strecke, fahrer, Rad(), Motor(), lto(60), soc_start=0.0, runden=1, boost=False)
@@ -297,7 +371,7 @@ def sensitivitaet(strecke: Strecke) -> None:
     ]
     for name, motor, rad, fahrer in faelle:
         ref = simuliere(strecke, fahrer, Rad(masse_ohne_speicher=10.0), None, None, runden=1)
-        e = simuliere(strecke, fahrer, rad, motor, lto(60))
+        e = simuliere_stationaer(strecke, fahrer, rad, motor, lto(60))
         print(f"| {name} | {100 * (e.fahrerarbeit_kj / ref.fahrerarbeit_kj - 1):+.1f} % | {e.rekup_wh:.1f} | "
               f"{e.fahrzeit_s / 60:.1f} ({ref.fahrzeit_s / 60:.1f}) |")
     print()
