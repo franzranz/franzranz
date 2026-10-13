@@ -137,8 +137,11 @@ def superkondensator(e_gesamt: float) -> Speicher:
 
 
 def skeleton_13s() -> Speicher:
-    """13 x Skeleton SCA0300 EVO in Serie: 4,84 Wh, 37 V, nutzbar bis 0,6 * Vmax (3,1 Wh), ~1,0 kg fertig."""
-    return Speicher("Superkond. 13S Skeleton (3,1 Wh nutzbar)", 4.84, 0.64, 0.98, 500.0, 4.84,
+    """13 x Skeleton SCA0300 EVO in Serie, 37 V, nutzbar bis 0,6 * Vmax, ~1,0 kg fertig.
+
+    Kapazität 300 F (Distributor) bzw. 330 F (Snippet) ist unklar; konservativ 300 F -> 4,40 Wh, 2,8 Wh nutzbar.
+    """
+    return Speicher("Superkond. 13S Skeleton (2,8 Wh nutzbar)", 4.40, 0.64, 0.98, 500.0, 4.40,
                     v_max=37.05, kondensator=True)
 
 

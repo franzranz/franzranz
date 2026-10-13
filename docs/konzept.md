@@ -1,91 +1,86 @@
-# Rekuperations-Singlespeed – Konzept & Lastenheft (Stand 2026-10-13)
+# Rekuperations-Singlespeed – Konzept, Machbarkeit, Urteil (Stand 2026-10-13)
 
-Prototyp, Einzelstück, nur Privatgelände. StVZO/Pedelec-Regeln bewusst ausgeklammert.
+Prototyp, Einzelstück, Privatgelände (StVZO bewusst ausgeklammert). Ziel des Nutzers: **das Anfahren am Singlespeed
+leichter machen, ohne Gangschaltung**. Energie nur aus Rekuperation über den Bremshebel, kein Ladestecker.
 
-## Festgelegt
+## Urteil
 
-| Punkt | Entscheidung |
-|---|---|
-| Einsatz | Stadt, mäßige Steigungen, viele Ampeln |
-| Fahrergewicht | beliebig, Auslegung bis 120 kg |
-| Radgewicht | Ziel < 14–15 kg |
-| Antrieb | Singlespeed, Alu-Rahmen, keine Schaltung |
-| Motor | Nabenmotor mit Rekuperation, vorne oder hinten offen |
-| Boost | Knopf/Daumenhebel, Motor zieht auch ohne Treten |
-| Laden | **nur** über den Bremshebel am Motorrad, kein Stecker, kein generatives Treten |
-| Bremse Motorrad | Hebel mit Analogsensor: erst Rekuperation, dann hydraulische Scheibe am selben Rad |
-| Bremse anderes Rad | normale Hydraulik-Scheibe |
-| Speicher | technologieoffen → Ergebnis: **LTO** (siehe unten) |
-| Winter | vorerst egal |
+**Machbar: bedingt. Sinnvoll für das Ziel: nein, außer „nie laden / kein Lithium“ ist eine harte Anforderung oder
+es ist ausdrücklich ein Lernprojekt.** Drei unabhängige Gutachten (Antriebsingenieur, Anwalt des Nutzerziels,
+Advocatus Diaboli) kommen zum gleichen Ergebnis; alle drei setzen das Konzept auf einen der letzten beiden Plätze.
 
-Die Reibbremse am Motorrad ist kein Rechtsthema, sondern Physik: Rekuperation liefert keine Bremskraft bei vollem Speicher,
-unter ~4 km/h (Kupferverluste fressen alles), über dem Motor-Drehmomentlimit und bei Elektronikfehler.
+- Das System verschiebt Arbeit vom Anfahren ins Rollen. Auf flacher Strecke (Ampel alle 400 m, Fahrer 100 kg):
+  **−27 % Anfahrarbeit pro Start bei +3,3 % Gesamtarbeit** (beste Nabe), −19 % bei +6,2 % (lieferbare Nabe).
+  Nur wo vor Ampeln Gefälle liegen, werden es −40 bis −60 % pro Start bei etwa ±0 gesamt.
+- Kosten: +4,3–5,4 kg, grob 1.000–1.600 € plus Rad, viel Elektronik- und Firmwarearbeit, ungeprüfte Motordaten,
+  Wunschmotor (SX1 Regen-Mod) zeitweise nicht lieferbar.
+- Pro Ampelstopp landen auf der Ebene nur 0,18–0,25 Wh im Speicher. Mehr gibt die Physik kaum her
+  (Bewegungsenergie bei 115 kg und 22 km/h: 0,6 Wh).
 
-## Simulationsergebnis (`sim/energiebilanz.py`, Rohdaten in `sim-ergebnis.md`)
+### Rangfolge der Optionen für das Ziel „leichter anfahren“
 
-Synthetische Stadtstrecke: 8 km, 20 Ampeln, 42 Hm hoch und wieder runter. Eingeschwungener Zustand
-(nie eingesteckt → Boost kann nur verbrauchen, was die Bremse vorher geladen hat).
+1. **Kürzer übersetzen** (Ritzel +2–3 Zähne, 10–25 €, 0 g): gleiche Kraftentlastung wie eine Nabe (−12 bis −20 %
+   Pedalkraft), Gesamtarbeit ±0. Kosten: höhere Trittfrequenz bei Reisetempo. Erster Versuch, immer.
+2. **Mehrgang-Nabe** ohne Zug (Sturmey-Archer S2 Kickshift, 120 mm, netto +0,4–0,6 kg) oder Shimano Nexus 3
+   (+0,9 kg, mit Zug): 27 % kürzerer Anfahrgang, Reisegang bleibt. Gesamtarbeit +2 bis +6 % (Nabenwirkungsgrad angenommen).
+3. **Leichtes Singlespeed-E-Bike oder Nachrüstsatz mit Akku** (z. B. Coboc ONE 13,1–13,7 kg; Swytch-Klasse +3,5–4 kg,
+   187–378 Wh): beim gleichen Mehrgewicht 60- bis 120-mal mehr Energie, hilft auch am Berg. Nachteil: Ladestecker.
+4. **E-Bike mit Akku + Rekuperation + Brake-by-Wire als eigenes Projekt:** nicht neu (Stromer, BionX, Bridgestone
+   Dual Drive rekuperieren über den Bremshebel), Rekuperation bringt mit Akku 3–10 %. Echtes Brake-by-Wire ohne
+   hydraulische Rückfallebene ist für einen Prototyp von Laien ein Sicherheits-No-Go. Lohnt nur als Lernprojekt.
+5. **Rekup-only-Singlespeed** (dieses Konzept): nur unter den oben genannten Bedingungen und nach bestandenem Vorversuch.
 
-- **Ertrag:** 6–9 Wh pro 8 km, also ~1 Wh/km. Ein freier Boost würde 22–36 Wh wollen → Rekuperation deckt ~25 %.
-- **Netto für den Fahrer:** Arbeit −7 % bis +5 % gegenüber einem 10-kg-Singlespeed ohne Motor, je nach Motorgüte.
-  Im Basisfall ±1 %. Das System bezahlt im Wesentlichen sein eigenes Gewicht und Schleppmoment.
-- **Was es wirklich bringt:** Anfahren. Die Zeit, in der der Fahrer am Übersetzungslimit hängt, geht von 27–53 s auf 0.
-  Fahrzeit 1–5 % kürzer. Für längere Steigungen reicht die Energie nicht: der Speicher pendelt nahe leer.
-- **Speicher:** LTO 30–60 Wh reicht. Superkondensatoren sind in jeder Zeile schlechter (+2,3 kg für 15 Wh).
-- **Größte Hebel:** (1) Kupferverluste des Motors bei hohem Drehmoment, (2) Schleppmoment ohne Strom, (3) Gewicht.
-  Der Wirkungsgrad des Motortreibers (97–98 %) ist kein Hebel.
-- Rekuperation ist im Modell eher optimistisch (gebremst wird immer, nie ausgerollt).
+## Was das Konzept braucht, wenn man es trotzdem baut
 
-Alle Motorparameter sind geschätzt. Nächster Schritt: echte Kennwerte (Kt, Wicklungswiderstand, Schleppmoment)
-der Kandidaten einsetzen, z. B. aus dem Motorsimulator von ebikes.ca.
+| Baugruppe | Wahl | Begründung / Status |
+|---|---|---|
+| Motor | Vorderrad, Getriebenabe ohne Freilauf (Shengyi SX1 Front Regen-Mod, 2,95 kg) | Hinterrad unmöglich: alle rekuperationsfähigen Hinterradnaben brauchen ≥ 135 mm, Singlespeed hat 120 mm. SX1: Km² ~13, Schlepp ~11 W bei 22 km/h (Listing, nicht gemessen; unklar ob mit gesperrter Kupplung). Lieferbarkeit unklar. |
+| Motor, Alternative | Grin All-Axle V3 Front (DD, 4,05 kg) | lieferbar, aber Km² 6,3 und schwerer → in jeder Rechnung schlechter |
+| Motor, später | Kompakt-Getriebenaben < 2,5 kg mit Rekuperation (Sonceboz/MMT, ~2027, vermutlich OEM) | würden den Gewichtsnachteil halbieren |
+| Regler | VESC (z. B. Flipsky 75100), Firmware vedderb/bldc | Modus „Current No Reverse Brake ADC2“ für Bremssensor, Rekup-Abregelung bei Überspannung eingebaut, Boost-Logik per LispBM |
+| Speicher | 13 × Skeleton SCA0300 EVO in Serie, 37 → 22 V, ~2,8 Wh nutzbar, ~1,0 kg | LTO-Kleinzellen laden nur 3–5C → für ~800 W zu schwer; Superkondensator passt zum Puffer von wenigen Wh |
+| Bremse Motorrad | Hydraulische Scheibe + analoger Hall-Sensor am Hebel, Rekuperation im Leerweg | Reibbremse bleibt Pflicht: Rekup fällt aus bei vollem Speicher, < ~5 km/h und Elektronikfehler |
+| Boost | Speicherinhalt gleichmäßig über ~10 s abgeben, Moment auf 20 Nm deckeln | „alles sofort“ verheizt 37–45 % der entnommenen Energie im Motor; 20 Nm wegen Traktion am Vorderrad (nasse Haltelinie) |
+| Gabel | Stahl oder Alu mit Rekup-tauglicher Drehmomentstütze, keine Carbongabel | gesperrte Kupplung = wechselndes Drehmoment, Grin warnt vor Achsbruch |
 
-## Boost nur zum Anfahren (`sim/anfahren.py`, Rohdaten in `sim-anfahren.md`)
+### Ungelöste technische Risiken
 
-Entscheidung: Boost nur nach Stillstand, nie am Berg. Kostet praktisch nichts, weil der Berg-Boost im Dauerbetrieb
-ohnehin leer lief. Pro Ampelstopp kommen 0,28–0,43 Wh in den Speicher (75–120 kg), das ist das Budget pro Start.
+- **Kaltstart / leerer Speicher:** VESC braucht ≥ 14 V. Bei leerem Kondensator ist der Regler aus, und die
+  Body-Dioden richten die Motorspannung gleich → ungeregeltes Bremsen des Vorderrads. Lösung (z. B. Hilfsakku oder
+  Trennschalter) widerspricht teilweise „kein Akku“.
+- **Eigenverbrauch:** Regler und Sensorik 1–3 W kosten 3–9 Prozentpunkte der Anfahrentlastung; ~60 mA Ruhestrom leeren
+  das Spannungsfenster in ~2 h.
+- **Fehlerfall:** kurzgeschlossener MOSFET bremst das Vorderrad kräftig.
+- **Schleppmoment:** entscheidet über Plus oder Minus (Schlepp × 2 ≈ +4–6 Prozentpunkte), ist aber nicht gemessen.
 
-Vergleich (100 kg, 300 W Antritt, getriebelose Nabe):
+## Vorversuch mit Abbruchkriterien (bevor Zielmotor und Speicher gekauft werden)
 
-| Strategie | Boost-Dauer | am Rad ankommend | 0→20 km/h (ohne Motor 8,6 s) | Fahrerarbeit gesamt |
-|---|---|---|---|---|
-| Alles sofort, volles Moment 35 Nm | 2,8 s | 53 % | 5,0 s | ±0 % |
-| Speicherinhalt gleichmäßig über 10 s | 5,5 s | 61 % | 5,0 s | −0,7 % |
-| Erst ab 8 km/h, 35 Nm | 2,3 s | 64 % | 5,5 s | −1,1 % |
-| Sanft 15 Nm bis Reisetempo | 6,3 s | 75 % | 6,1 s | −2,0 % |
+Stufe 0 – fast kostenlos, 2 Wochen:
+1. **Strecke loggen** (Handy-GPS, 3 typische Fahrten). Abbruch von A, wenn < 1,5 aktiv gebremste Stopps pro km aus
+   ≥ 15 km/h und kaum Ampeln nach Gefällen.
+2. **Ritzel +2–3 Zähne.** Ist das Anfahren danach „leicht genug“ (≥ 7/10) und die Trittfrequenz bei Reisetempo
+   ≤ 90/min akzeptabel → Problem gelöst, Projekt beendet.
+3. **4,5 kg Ballast an der Gabel** 2 Wochen fahren und tragen. Inakzeptabel → A und C beendet.
 
-- „Volle Power 10 s“ gibt es nicht: Die Energie einer Bremsung ist bei vollem Moment nach ~3 s verbraucht.
-- „Alles sofort“ fühlt sich am stärksten an, verheizt aber die Hälfte im Motor (Kupferverluste ∝ Moment²,
-  bei niedriger Drehzahl kommt kaum mechanische Leistung heraus).
-- Leistungsgrenze (500 vs. 1000 W) ist beim Anfahren egal; was zählt, ist das Moment (Phasenstrom).
-- Sanft dosiert spart gegenüber „alles sofort“ 1,4–2,4 Prozentpunkte Fahrerarbeit und ist 0,6–1,3 s langsamer
-  auf 20 km/h. Alle Unterschiede sind klein,
-  weil pro Start nur ~0,4 Wh im Spiel sind.
-- Gilt für die getriebelose Nabe. Bei einer Getriebenabe ist der Nachteil von „alles sofort“ kleiner (zu prüfen).
+Stufe 1 – Funktionsmuster, 300–500 €, Teile für Option 3 weiter nutzbar (gebrauchtes Vorderrad mit Nabenmotor,
+VESC 75100, kleiner Li-Ion-Akku als Speicher-Ersatz, analoger Daumenhebel, Hall-Bremssensor, Drehmomentstütze):
+- K1 Rekuperation: ≥ 0,15 Wh pro Stopp aus 22 km/h auf der Ebene (Modell 0,18–0,25).
+- K2 Schleppmoment: Abbruch bei > 15 W bei 22 km/h (Auslauftest gegen normales Laufrad); Ziel ≤ 6–8 W.
+- K3 Spürbarkeit (entscheidend): Boost per LispBM auf den Ertrag des letzten Stopps begrenzt, je 10 Starts mit/ohne
+  in zufälliger Reihenfolge bei gleicher, bequemer Anstrengung. Abbruch, wenn 0→20 km/h nicht ≥ 1,5 s schneller wird.
+- K4 Traktion: 10 Starts auf nasser Haltelinie/Pflaster mit 20 Nm ohne Durchdrehen.
+- K5 Eigenverbrauch ≤ 2 W, Kaltstart ohne Hilfsbatterie gelöst.
+- K6 Bremsmischung: ruckfrei nach ≤ 20–40 Arbeitsstunden, kein Aussetzer in 20 Testbremsungen.
+- K7 Rahmen: Rad hochgerechnet ≤ 15,0 kg, Prototypkosten ≤ 1.600 €, K1–K3 nach 500 € und 4 Wochenenden gemessen.
 
-## Komponenten-Shortlist
+## Belege und Rechnung
 
-| Baugruppe | Favorit | Alternative | Status |
-|---|---|---|---|
-| Motor | Grin GMAC, hinten, Getriebe ohne Freilauf, rekuperationsfähig, ~3,8 kg | Grin All-Axle DD vorne, ~4,05 kg, Steckachse | Kennwerte fehlen; Entscheidung nach Simulation mit echten Daten |
-| Motor (später) | Sonceboz/MMT/eBikeLabs Kompakt-Getriebenabe, < 2,5 kg, 70 Nm, Rekup | – | angekündigt für ~2027, vermutlich nur OEM |
-| Regler | VESC-Hardware (z. B. Flipsky 75100) mit Firmware vedderb/bldc, Modus „Current No Reverse Brake ADC2“ | EBiCS-Firmware auf Lishui-Regler | Modus in Foren mehrfach genutzt, Wizard-Bugs bekannt |
-| Speicher | LTO, ~16s (≈38 V), 30–60 Wh, ≥10C Ladestrom, ~0,4–0,8 kg | – | passende kleine Zellen (1,3–2 Ah, hohe Rate) noch zu finden |
-| BMS | LTO-fähig (Zellspannung 1,5–2,8 V), mit Balancer | vesc_bms_fw | LTO-Support noch prüfen |
-| Bremssensor | linearer Hall-Sensor + Magnet am Hebel (analog!) | Drucksensor in der Hydraulikleitung | Schaltsensoren (an/aus) ungeeignet: Rekup 0/100 % ruckt |
-| Boost | Daumenhebel analog auf ADC1 | Taster mit Rampe in Firmware | Taster mit 500 W Sprung = Schlupf + Kupferverluste |
-| Bremsen | 2× Hydraulik-Scheibe | – | – |
-
-## Gewichtsbudget (Schätzung)
-
-Leichtes Alu-Singlespeed mit Hydraulik-Scheiben ~9,5 kg, Nabenmotor +3,9 kg (gegenüber normaler Nabe),
-Regler 0,2 kg, Kabel/Sensoren/Hebel 0,3 kg, LTO 0,4–0,8 kg → **≈ 14,3–14,7 kg**.
-Unter 14 kg geht mit heute frei kaufbaren Nabenmotoren kaum (Vergleich: Fixie Inc. Backspin mit Zehus-Nabe 13,3 kg,
-aber geschlossenes System mit 172-Wh-Akku und Ladebuchse).
-
-## Offene Punkte
-
-- Vorne/hinten: hängt an Kupferverlusten und Schleppmoment GMAC vs. All-Axle.
-- Bremsverzögerung, die die Rekuperation allein abdecken soll.
-- Boost-Strategie: jeder Ampelstart oder Energie für Steigungen sparen?
-- Konkrete LTO-Zelle und BMS.
-- Was der Unterschied zu Pi-Pop und Zehus/Fixie Inc. sein soll.
+- Simulation: `sim/energiebilanz.py` (Modell), `sim/anfahren.py` (Boost-Strategien), `sim/machbarkeit.py`
+  (echte Motoren, Ampelabstand, Ausrollen, Alternativen). Ergebnisse in `sim-ergebnis.md`, `sim-anfahren.md`,
+  `sim-machbarkeit.md`. Energieerhaltung je Runde < 1 % Fehler; externer Code-Review ohne kritische Befunde.
+- Modellgrenzen: Fahrer tritt immer mit voller Kraft (Motor macht schneller, nicht leichter; „s am Kraftlimit = 0“
+  ist dadurch geschönt), keine Trittfrequenz-Kosten (bevorzugt kürzere Übersetzung leicht), Traktion nicht modelliert,
+  Nabenwirkungsgrade angenommen, Motordaten nur aus Grin-Listings (Suchmaschinen-Snippets), synthetische Strecke.
+- Stand der Technik: Pi-Pop (Superkondensator, kein Akku, 18–21,7 kg, Tests ~5/10), Anod Hybrid (Boost-Knopf,
+  Gen 2 mit 216 Wh und Ladung), Zehus/Fixie Inc. Backspin (Singlespeed 13,3–13,5 kg mit Akku), Stromer/BionX/
+  Bridgestone (Rekuperation über Bremshebel). Stufenloses analoges Brake-Blending: nur Patente, kein Serienrad.

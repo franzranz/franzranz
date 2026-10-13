@@ -75,8 +75,12 @@ def ausrollen(strecke: Strecke, motoren, strategie: Boost) -> None:
                   f"{100 * e.motoranteil_anfahren:.0f} % | {e.rekup_wh / e.starts:.2f} |")
 
 
-def alternativen(strecke: Strecke) -> None:
-    """Gleiches Ziel (leichter anfahren), anderer Weg: Zweigang-Nabe statt Motor."""
+def alternativen(strecke: Strecke, titel: str) -> None:
+    """Gleiches Ziel (leichter anfahren), andere Wege: kürzeres Ritzel, Mehrgang-Nabe, Motor.
+
+    Achtung: Das Fahrermodell kennt keine Trittfrequenz-Kosten (kürzeres Ritzel = höhere Kadenz bei Reisetempo)
+    und tritt immer mit voller Kraft; der Motor macht den Fahrer schneller, nicht leichter.
+    """
     # Sturmey-Archer S2 Kickshift (120 mm, ~0,5 kg netto): kleiner Gang direkt, großer Gang 138 % über Planeten.
     # Shimano Nexus 3 (120 mm, ~0,9 kg netto): 1. Gang 0,733 über Planeten, 2. Gang direkt (= Singlespeed).
     # Wirkungsgrade der Planetenstufe: Annahme 0,94 (Kyle/Berto: Nabenschaltungen 86-95 %).
@@ -84,13 +88,20 @@ def alternativen(strecke: Strecke) -> None:
     nexus3 = Rad(masse_ohne_speicher=BASIS_RAD + 0.9, gang_klein=0.733, eta_klein=0.94, eta_gross=0.99)
     g = STRATEGIEN[1]
     anfahrhilfe = Boost("Anfahrhilfe nur bis 12 km/h", True, 10, 35, 1000, v_bis=12 / 3.6)
+    ritzel_12 = Rad(masse_ohne_speicher=BASIS_RAD, gang_klein=0.88, v_schalt=math.inf)
+    ritzel_20 = Rad(masse_ohne_speicher=BASIS_RAD, gang_klein=0.80, v_schalt=math.inf)
     for p_anfahr in (300, 150):
         fahrer = Fahrer(masse=100, p_anfahr=p_anfahr)
         ref = simuliere(strecke, fahrer, Rad(masse_ohne_speicher=BASIS_RAD), None, None, runden=1)
-        print(f"\n### Alternativen zum selben Ziel: Stadtstrecke, Fahrer 100 kg, Antritt {p_anfahr} W\n")
-        print("| Variante | Rad kg | Fahrer gesamt vs. SS | 0→20 km/h s | Fahrer-J pro Start | s am Übersetzungslimit |")
+        print(f"\n### Alternativen zum selben Ziel: {titel}, Fahrer 100 kg, Antritt {p_anfahr} W\n")
+        print("| Variante | Rad kg | Fahrer gesamt vs. SS | 0→20 km/h s | Fahrer-J pro Start | "
+              "s am Kraftlimit ohne Motorhilfe |")
         print("|---|---|---|---|---|---|")
         zeilen = [("Singlespeed", BASIS_RAD, ref)]
+        zeilen.append(("Singlespeed, Ritzel +2 Zähne (12 % kürzer, höhere Kadenz)", BASIS_RAD,
+                       simuliere(strecke, fahrer, ritzel_12, None, None, runden=1)))
+        zeilen.append(("Singlespeed, 20 % kürzer übersetzt (höhere Kadenz)", BASIS_RAD,
+                       simuliere(strecke, fahrer, ritzel_20, None, None, runden=1)))
         zeilen.append(("Zweigang-Nabe Sturmey-Archer S2 (Anfahrgang direkt, großer Gang 138 %)", s2.masse_ohne_speicher,
                        simuliere(strecke, fahrer, s2, None, None, runden=1)))
         zeilen.append(("Dreigang-Nabe Shimano Nexus 3 (1. Gang 0,733, 2. Gang direkt)", nexus3.masse_ohne_speicher,
@@ -120,7 +131,8 @@ def main() -> None:
     tabelle(stadt, Fahrer(masse=100, p_anfahr=150), motoren, "Stadtstrecke, schwacher Antritt")
     ampelabstand(Fahrer(masse=100, p_anfahr=300), motoren + [sx1_pess], STRATEGIEN[1])
     ausrollen(stadt, [MOTOREN["all_axle"], sx1], STRATEGIEN[1])
-    alternativen(stadt)
+    alternativen(stadt, "Stadtstrecke mit Gefällen")
+    alternativen(Strecke(flach_mit_ampeln(400)), "flach, Ampel alle 400 m")
 
 
 if __name__ == "__main__":
